@@ -1,0 +1,152 @@
+-- Criação do banco de dados "exemplo" (se necessário)
+CREATE DATABASE IF NOT EXISTS exemplo;
+USE exemplo;
+
+-- Tabela de funcionários
+CREATE TABLE employee (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50),
+    middle_initial CHAR(1),
+    last_name VARCHAR(50),
+    social_security_number CHAR(9),
+    date_of_birth DATE,
+    address VARCHAR(100),
+    gender ENUM('M', 'F'),
+    salary DECIMAL(10, 2),
+    manager_ssn CHAR(9),
+    department_id INT
+);
+
+-- Inserção de dados na tabela de funcionários
+INSERT INTO employee (first_name, middle_initial, last_name, social_security_number, date_of_birth, address, gender, salary, manager_ssn, department_id)
+VALUES
+    ('Alice', 'M', 'Johnson', '123-45-6789', '1990-03-15', '123 Main St, Anytown, CA', 'F', 55000.00, NULL, 2),
+    ('Bob', 'T', 'Williams', '987-65-4321', '1985-07-20', '456 Elm St, Othertown, CA', 'M', 60000.50, '123-45-6789', 1),
+    ('Charlie', 'J', 'Smith', '333-22-4444', '1978-11-10', '789 Oak St, Anycity, CA', 'M', 75000.75, '987-65-4321', 1),
+    ('David', 'E', 'Davis', '555-12-3456', '1995-04-25', '101 Pine St, Anothercity, CA', 'M', 45000.25, '987-65-4321', 2);
+
+-- Tabela de dependentes
+CREATE TABLE dependent (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT,
+    name VARCHAR(50),
+    gender ENUM('M', 'F'),
+    date_of_birth DATE,
+    relationship VARCHAR(20)
+);
+
+-- Inserção de dados na tabela de dependentes
+INSERT INTO dependent (employee_id, name, gender, date_of_birth, relationship)
+VALUES
+    (1, 'Emily', 'F', '2010-02-10', 'Daughter'),
+    (2, 'James', 'M', '2012-08-15', 'Son'),
+    (3, 'Sophia', 'F', '2007-05-03', 'Spouse'),
+    (4, 'Oliver', 'M', '1980-12-28', 'Spouse');
+
+-- Tabela de departamentos
+CREATE TABLE department (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    manager_ssn CHAR(9),
+    start_date DATE,
+    end_date DATE
+);
+
+-- Inserção de dados na tabela de departamentos
+INSERT INTO department (name, manager_ssn, start_date, end_date)
+VALUES
+    ('Sales', '123-45-6789', '2010-01-01', NULL),
+    ('Engineering', '987-65-4321', '2010-01-01', NULL),
+    ('Marketing', '987-65-4321', '2015-03-15', NULL);
+
+-- Tabela de localizações dos departamentos
+CREATE TABLE department_location (
+    department_id INT,
+    location VARCHAR(50)
+);
+
+-- Inserção de dados na tabela de localizações dos departamentos
+INSERT INTO department_location (department_id, location)
+VALUES
+    (1, 'Los Angeles'),
+    (2, 'San Francisco'),
+    (3, 'New York');
+
+-- Tabela de projetos
+CREATE TABLE project (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    department_id INT,
+    location VARCHAR(50),
+    manager_ssn CHAR(9)
+);
+
+-- Inserção de dados na tabela de projetos
+INSERT INTO project (name, department_id, location, manager_ssn)
+VALUES
+    ('Product A', 1, 'Los Angeles', '123-45-6789'),
+    ('Product B', 2, 'San Francisco', '987-65-4321'),
+    ('Product C', 3, 'New York', '987-65-4321');
+
+-- Tabela de horas trabalhadas
+CREATE TABLE work_hours (
+    employee_id INT,
+    project_id INT,
+    hours_worked DECIMAL(5, 2)
+);
+
+-- Inserção de dados na tabela de horas trabalhadas
+INSERT INTO work_hours (employee_id, project_id, hours_worked)
+VALUES
+    (1, 1, 35.5),
+    (1, 2, 20.0),
+    (2, 1, 30.0),
+    (2, 3, 25.5),
+    (3, 2, 40.0);
+
+-- Consultas SQL
+
+-- Selecionar todos os funcionários
+SELECT * FROM employee;
+
+-- Contar o número de dependentes de cada funcionário
+SELECT e.id AS employee_id, e.first_name, e.last_name, COUNT(d.id) AS num_dependents
+FROM employee e
+LEFT JOIN dependent d ON e.id = d.employee_id
+GROUP BY e.id;
+
+-- Selecionar todos os dependentes
+SELECT * FROM dependent;
+
+-- Selecionar a data de nascimento e o endereço de John Smith
+SELECT date_of_birth, address
+FROM employee
+WHERE first_name = 'John' AND last_name = 'Smith';
+
+-- Selecionar o departamento chamado "Sales"
+SELECT * FROM department WHERE name = 'Sales';
+
+-- Selecionar o nome do gerente de cada departamento
+SELECT d.name AS department_name, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
+FROM department d
+LEFT JOIN employee e ON d.manager_ssn = e.social_security_number;
+
+-- Selecionar todos os projetos
+SELECT * FROM project;
+
+-- Selecionar o nome do departamento e o nome do gerente de cada departamento
+SELECT d.name AS department_name, CONCAT(e.first_name, ' ', e.last_name) AS manager_name
+FROM department d
+LEFT JOIN employee e ON d.manager_ssn = e.social_security_number;
+
+-- Selecionar os projetos localizados em "Los Angeles"
+SELECT * FROM project WHERE location = 'Los Angeles';
+
+-- Selecionar informações sobre projetos e departamentos localizados em "Los Angeles"
+SELECT p.name AS project_name, d.name AS department_name, dl.location AS department_location
+FROM project p
+JOIN department d ON p.department_id = d.id
+JOIN department_location dl ON d.id = dl.department_id AND dl.location = 'Los Angeles';
+
+-- Selecionar todos os funcionários que pertencem a departamentos com IDs 1, 2 e 3
+SELECT * FROM employee WHERE department_id IN (1, 2, 3);
